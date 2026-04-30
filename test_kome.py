@@ -1,7 +1,7 @@
 import requests
 import json
 
-VIDEO_ID = "o9eG0QdZEh4"  # One of the videos from your log that failed
+VIDEO_ID = "TJIP4K5qvmI"  # User provided video
 
 def test_transcript():
     session = requests.Session()
@@ -24,35 +24,51 @@ def test_transcript():
     })
 
     print(f"Testing with video ID: {VIDEO_ID}")
+    print(f"Video URL: https://youtu.be/{VIDEO_ID}")
     
     try:
-        print("Initializing session...")
+        print("\n[1] Initializing session...")
         session.get('https://kome.ai/tools/youtube-transcript-generator')
-        print(f"Cookies: {dict(session.cookies)}")
-        print(f"Session headers: {dict(session.headers)}")
+        print(f"    Cookies: {dict(session.cookies)}")
 
         url = f"https://youtu.be/{VIDEO_ID}"
         payload = {'video_id': url, 'format': True, 'source': 'tool'}
         
-        print(f" Posting to: https://kome.ai/api/transcript")
-        print(f" Payload: {payload}")
-        
+        print(f"\n[2] Posting to API...")
         response = session.post('https://kome.ai/api/transcript', json=payload)
         
-        print(f"Status: {response.status_code}")
-        print(f"Response text (first 500): {response.text[:500]}")
-        print(f"Response type: {type(response.text)}")
+        print(f"    Status: {response.status_code}")
         
+        if response.status_code != 200:
+            print(f"    Error response: {response.text[:500]}")
+            return
+            
+        print(f"    Response type: {type(response.text)}")
+        print(f"    Response length: {len(response.text)}")
+        
+        # Try to parse as JSON
         try:
             data = response.json()
-            print(f"JSON parsed: {type(data)}")
-            print(f"Data: {data[:200] if len(str(data)) > 200 else data}")
-        except:
-            print("Failed to parse as JSON")
-            print(f"Raw: {response.text[:200]}")
+            print(f"\n[3] Parsed as JSON")
+            print(f"    Type: {type(data)}")
+            
+            if isinstance(data, list):
+                print(f"    List length: {len(data)}")
+                print(f"    First item: {data[0] if data else 'empty'}")
+            elif isinstance(data, dict):
+                print(f"    Keys: {list(data.keys())}")
+                if 'transcript' in data:
+                    print(f"    Transcript length: {len(data['transcript'])}")
+                print(f"    Sample: {str(data)[:300]}")
+            else:
+                print(f"    Data: {str(data)[:300]}")
+                
+        except json.JSONDecodeError as e:
+            print(f"\n[3] Failed to parse JSON: {e}")
+            print(f"    Raw response: {response.text[:500]}")
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"\nError: {e}")
         import traceback
         traceback.print_exc()
 
