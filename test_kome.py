@@ -1,7 +1,7 @@
 import requests
 import json
 
-VIDEO_ID = "TJIP4K5qvmI"  # User provided video
+VIDEO_ID = "TJIP4K5qvmI"
 
 def test_transcript():
     session = requests.Session()
@@ -23,52 +23,52 @@ def test_transcript():
         'referer': 'https://kome.ai/tools/youtube-transcript-generator',
     })
 
-    print(f"Testing with video ID: {VIDEO_ID}")
-    print(f"Video URL: https://youtu.be/{VIDEO_ID}")
+    print(f"Testing video: https://youtu.be/{VIDEO_ID}")
     
     try:
-        print("\n[1] Initializing session...")
-        session.get('https://kome.ai/tools/youtube-transcript-generator')
-        print(f"    Cookies: {dict(session.cookies)}")
+        print("Step 1: Initialize session...")
+        r = session.get('https://kome.ai/tools/youtube-transcript-generator')
+        print(f"  Init status: {r.status_code}")
+        print(f"  Cookies: {dict(session.cookies)}")
 
         url = f"https://youtu.be/{VIDEO_ID}"
         payload = {'video_id': url, 'format': True, 'source': 'tool'}
         
-        print(f"\n[2] Posting to API...")
+        print(f"Step 2: POST to API...")
+        print(f"  URL: https://kome.ai/api/transcript")
+        print(f"  Payload: {payload}")
+        
         response = session.post('https://kome.ai/api/transcript', json=payload)
         
-        print(f"    Status: {response.status_code}")
+        print(f"  Status: {response.status_code}")
+        print(f"  Content-Type: {response.headers.get('Content-Type')}")
         
-        if response.status_code != 200:
-            print(f"    Error response: {response.text[:500]}")
-            return
-            
-        print(f"    Response type: {type(response.text)}")
-        print(f"    Response length: {len(response.text)}")
+        raw_text = response.text
+        print(f"  Raw response (first 1000): {raw_text[:1000]}")
+        print(f"  Is valid JSON start '[': {raw_text.strip().startswith('[')}")
+        print(f"  Is valid JSON start '{{': {raw_text.strip().startswith('{')}")
         
-        # Try to parse as JSON
+        # Test parsing
+        print("Step 3: Parse response...")
         try:
             data = response.json()
-            print(f"\n[3] Parsed as JSON")
-            print(f"    Type: {type(data)}")
-            
+            print(f"  response.json() succeeded: {type(data)}")
             if isinstance(data, list):
-                print(f"    List length: {len(data)}")
-                print(f"    First item: {data[0] if data else 'empty'}")
+                print(f"  List length: {len(data)}")
+                print(f"  First item: {data[0]}")
             elif isinstance(data, dict):
-                print(f"    Keys: {list(data.keys())}")
-                if 'transcript' in data:
-                    print(f"    Transcript length: {len(data['transcript'])}")
-                print(f"    Sample: {str(data)[:300]}")
-            else:
-                print(f"    Data: {str(data)[:300]}")
-                
-        except json.JSONDecodeError as e:
-            print(f"\n[3] Failed to parse JSON: {e}")
-            print(f"    Raw response: {response.text[:500]}")
+                print(f"  Dict keys: {data.keys()}")
+        except Exception as e:
+            print(f"  response.json() failed: {e}")
+            print(f"  Trying json.loads on raw text...")
+            try:
+                data = json.loads(raw_text)
+                print(f"  json.loads succeeded: {type(data)}")
+            except Exception as e2:
+                print(f"  json.loads also failed: {e2}")
 
     except Exception as e:
-        print(f"\nError: {e}")
+        print(f"Error: {e}")
         import traceback
         traceback.print_exc()
 
