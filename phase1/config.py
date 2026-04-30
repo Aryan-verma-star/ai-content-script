@@ -20,7 +20,9 @@ REQUIRED_KEYS = [
     "MAX_TRANSCRIPT_CHARS",
 ]
 
-LLM_PROVIDER_VALUES = ["openai", "anthropic"]
+OPTIONAL_KEYS = ["OPENAI_COMPATIBLE_API_BASE"]
+
+LLM_PROVIDER_VALUES = ["openai", "anthropic", "openai_compatible"]
 
 
 class ConfigurationError(Exception):
@@ -64,6 +66,11 @@ def validate_config() -> None:
     if provider not in LLM_PROVIDER_VALUES:
         raise ConfigurationError(
             f"LLM_PROVIDER must be one of {LLM_PROVIDER_VALUES}, got '{provider}'"
+        )
+
+    if provider == "openai_compatible" and not os.getenv("OPENAI_COMPATIBLE_API_BASE"):
+        raise ConfigurationError(
+            "OPENAI_COMPATIBLE_API_BASE is required when LLM_PROVIDER is 'openai_compatible'"
         )
 
 
@@ -143,6 +150,26 @@ def get_max_transcript_chars() -> int:
         raise ConfigurationError(f"MAX_TRANSCRIPT_CHARS must be an integer, got '{value}'")
 
 
+def get_openaiCompatible_api_base() -> str:
+    """Get the base URL for OpenAI-compatible API.
+
+    Returns:
+        The base URL string (empty if not using openai_compatible).
+
+    Raises:
+        ConfigurationError: If LLM_PROVIDER is 'openai_compatible' but the key is not set.
+    """
+    provider = os.getenv("LLM_PROVIDER", "")
+    if provider != "openai_compatible":
+        return ""
+    value = os.getenv("OPENAI_COMPATIBLE_API_BASE", "")
+    if not value:
+        raise ConfigurationError(
+            "OPENAI_COMPATIBLE_API_BASE is required when LLM_PROVIDER is 'openai_compatible'"
+        )
+    return value
+
+
 class Config:
     """Central configuration object that provides access to all settings.
 
@@ -158,6 +185,11 @@ class Config:
         self._anthropic_api_key = get_anthropic_api_key()
         self._target_niche = get_target_niche()
         self._max_transcript_chars = get_max_transcript_chars()
+        self._openai_compatible_api_base = (
+            os.getenv("OPENAI_COMPATIBLE_API_BASE", "")
+            if self._llm_provider == "openai_compatible"
+            else ""
+        )
 
     @property
     def youtube_api_key(self) -> str:
@@ -182,6 +214,10 @@ class Config:
     @property
     def max_transcript_chars(self) -> int:
         return self._max_transcript_chars
+
+    @property
+    def openai_compatible_api_base(self) -> str:
+        return self._openai_compatible_api_base
 
 
 config = Config()

@@ -113,7 +113,7 @@ Based on this data, respond ONLY with a valid JSON object in the following exact
 def call_llm(prompt: str) -> str:
     """Call the configured LLM API with the given prompt.
 
-    Uses either OpenAI or Anthropic based on configuration.
+    Uses either OpenAI, Anthropic, or OpenAI-compatible API based on configuration.
 
     Args:
         prompt: The prompt to send to the LLM.
@@ -122,7 +122,7 @@ def call_llm(prompt: str) -> str:
         The raw response content from the LLM.
 
     Raises:
-        ValueError: If LLM_PROVIDER is not set to 'openai' or 'anthropic'.
+        ValueError: If LLM_PROVIDER is not set to a valid value.
     """
     provider = config.llm_provider
 
@@ -145,9 +145,22 @@ def call_llm(prompt: str) -> str:
         )
         return response.content[0].text
 
+    elif provider == "openai_compatible":
+        client = openai.OpenAI(
+            api_key=config.openai_api_key,
+            base_url=config.openai_compatible_api_base,
+        )
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            temperature=0.7,
+            max_tokens=1000,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.choices[0].message.content
+
     else:
         raise ValueError(
-            f"Invalid LLM_PROVIDER: '{provider}'. Must be 'openai' or 'anthropic'."
+            f"Invalid LLM_PROVIDER: '{provider}'. Must be 'openai', 'anthropic', or 'openai_compatible'."
         )
 
 
