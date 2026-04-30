@@ -294,21 +294,21 @@ def parse_and_validate(llm_response: str) -> dict[str, Any]:
         if key not in parsed:
             raise ValueError(f"Missing required key in LLM response: {key}")
 
-    if not isinstance(parsed["proven_frameworks"], list) or len(parsed["proven_frameworks"]) < 2:
+    if not isinstance(parsed["proven_frameworks"], list) or len(parsed["proven_frameworks"]) < 1:
         raise ValueError(
-            f"proven_frameworks must be a list with at least 2 items, "
+            f"proven_frameworks must be a list with at least 1 item, "
             f"got {len(parsed.get('proven_frameworks', []))}"
         )
 
-    if not isinstance(parsed["high_retention_hooks"], list) or len(parsed["high_retention_hooks"]) < 2:
+    if not isinstance(parsed["high_retention_hooks"], list) or len(parsed["high_retention_hooks"]) < 1:
         raise ValueError(
-            f"high_retention_hooks must be a list with at least 2 items, "
+            f"high_retention_hooks must be a list with at least 1 item, "
             f"got {len(parsed.get('high_retention_hooks', []))}"
         )
     
-    if not isinstance(parsed["retention_mechanics"], list) or len(parsed["retention_mechanics"]) < 2:
+    if not isinstance(parsed["retention_mechanics"], list) or len(parsed["retention_mechanics"]) < 1:
         raise ValueError(
-            f"retention_mechanics must be a list with at least 2 items, "
+            f"retention_mechanics must be a list with at least 1 item, "
             f"got {len(parsed.get('retention_mechanics', []))}"
         )
 

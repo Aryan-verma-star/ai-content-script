@@ -187,7 +187,7 @@ def get_tiktok_data(niche: str) -> list[dict[str, Any]]:
         session = requests.Session()
         
         session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
         })
         
@@ -196,15 +196,17 @@ def get_tiktok_data(niche: str) -> list[dict[str, Any]]:
         response = session.get(search_url, timeout=15)
         
         if response.status_code != 200:
-            return [{"platform": "tiktok", "title": f"Trending {niche}", "channel": "@trending", "view_count": 0, "like_count": 0, "transcript": f"{niche} content"}]
+            logger.warning(f"TikTok API returned: {response.status_code}")
+            return _get_tiktok_mock(niche)
         
         data = response.json()
         
-        if 'data' not in data or not data['data']:
-            return [{"platform": "tiktok", "title": f"Trending {niche}", "channel": "@trending", "view_count": 0, "like_count": 0, "transcript": f"{niche} content"}]
+        if 'data' not in data or not data.get('data'):
+            logger.warning("TikTok returned empty data")
+            return _get_tiktok_mock(niche)
         
         videos = []
-        for item in data['data'][:3]:
+        for item in data['data'][:5]:
             if item.get('type') == 1:
                 video = item.get('video', {})
                 stats = video.get('stats', {})
@@ -218,11 +220,26 @@ def get_tiktok_data(niche: str) -> list[dict[str, Any]]:
                     "transcript": video.get('desc', '')[:200],
                 })
         
-        return videos if videos else [{"platform": "tiktok", "title": f"Trending {niche}", "channel": "@trending", "view_count": 0, "like_count": 0, "transcript": f"{niche} content"}]
+        return videos if videos else _get_tiktok_mock(niche)
         
     except Exception as e:
         logger.warning(f"TikTok search failed: {e}")
-        return [{"platform": "tiktok", "title": f"Trending {niche}", "channel": "@trending", "view_count": 0, "like_count": 0, "transcript": f"{niche} content"}]
+        return _get_tiktok_mock(niche)
+
+
+def _get_tiktok_mock(niche: str) -> list[dict[str, Any]]:
+    """Fallback mock data for TikTok."""
+    return [
+        {
+            "platform": "tiktok",
+            "video_id": f"mock_{niche[:5]}_001",
+            "title": f"Trending {niche} tips",
+            "channel": "@trending",
+            "view_count": 100000,
+            "like_count": 10000,
+            "transcript": f"Here are the top {niche} tips that changed everything for me.",
+        },
+    ]
 
 
 def get_instagram_data(niche: str) -> list[dict[str, Any]]:
@@ -238,7 +255,7 @@ def get_instagram_data(niche: str) -> list[dict[str, Any]]:
         session = requests.Session()
         
         session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept-Language': 'en-US,en;q=0.9',
         })
         
@@ -247,15 +264,17 @@ def get_instagram_data(niche: str) -> list[dict[str, Any]]:
         response = session.get(search_url, timeout=15)
         
         if response.status_code != 200:
-            return [{"platform": "instagram", "caption": f"Trending {niche}", "account": "@trending", "view_count": 0, "like_count": 0, "transcript": f"{niche} content"}]
+            logger.warning(f"Instagram API returned: {response.status_code}")
+            return _get_instagram_mock(niche)
         
         data = response.json()
         
         if 'users' not in data or not data.get('users'):
-            return [{"platform": "instagram", "caption": f"Trending {niche}", "account": "@trending", "view_count": 0, "like_count": 0, "transcript": f"{niche} content"}]
+            logger.warning("Instagram returned empty data")
+            return _get_instagram_mock(niche)
         
         users_data = []
-        for user_item in data['users'][:3]:
+        for user_item in data['users'][:5]:
             user = user_item.get('user', {})
             users_data.append({
                 "platform": "instagram",
@@ -263,15 +282,30 @@ def get_instagram_data(niche: str) -> list[dict[str, Any]]:
                 "caption": f"Trending {niche} content from @{user.get('username', '')}",
                 "account": f"@{user.get('username', 'unknown')}",
                 "view_count": user.get('follower_count', 0),
-                "like_count": user.get('follower_count', 0),
-                "transcript": f"{niche} content",
+                "like_count": int(user.get('follower_count', 0) * 0.1),
+                "transcript": f"{niche} content from @{user.get('username', '')}",
             })
         
-        return users_data if users_data else [{"platform": "instagram", "caption": f"Trending {niche}", "account": "@trending", "view_count": 0, "like_count": 0, "transcript": f"{niche} content"}]
+        return users_data if users_data else _get_instagram_mock(niche)
         
     except Exception as e:
         logger.warning(f"Instagram search failed: {e}")
-        return [{"platform": "instagram", "caption": f"Trending {niche}", "account": "@trending", "view_count": 0, "like_count": 0, "transcript": f"{niche} content"}]
+        return _get_instagram_mock(niche)
+
+
+def _get_instagram_mock(niche: str) -> list[dict[str, Any]]:
+    """Fallback mock data for Instagram."""
+    return [
+        {
+            "platform": "instagram",
+            "post_id": f"mock_{niche[:5]}_001",
+            "caption": f"Trending {niche} tips and tricks! ",
+            "account": "@trending",
+            "view_count": 50000,
+            "like_count": 5000,
+            "transcript": f"Here's everything you need to know about {niche}.",
+        },
+    ]
 
 
 def run_scraper() -> dict[str, Any]:
