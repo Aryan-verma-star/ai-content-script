@@ -121,13 +121,13 @@ def get_transcript(video_id: str, max_chars: int) -> str:
     """
     try:
         session = requests.Session()
-        
+
         mac_safari_ua = (
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
             "AppleWebKit/605.1.15 (KHTML, like Gecko) "
             "Version/18.0 Safari/605.1.15"
         )
-        
+
         session.headers.update({
             'user-agent': mac_safari_ua,
             'accept': 'application/json, text/plain, */*',
@@ -138,49 +138,31 @@ def get_transcript(video_id: str, max_chars: int) -> str:
             'origin': 'https://kome.ai',
             'referer': 'https://kome.ai/tools/youtube-transcript-generator',
         })
-        
+
         session.get('https://kome.ai/tools/youtube-transcript-generator')
-        
+
         url = f"https://youtu.be/{video_id}"
         payload = {
             'video_id': url,
             'format': True,
             'source': 'tool'
         }
-        
+
         response = session.post('https://kome.ai/api/transcript', json=payload)
-        
+
         if response.status_code != 200:
             logger.warning(f"Transcript API error: {response.status_code}")
             return "[Transcript unavailable]"
-        
-        data = response.text
-        
-        try:
-            parsed = response.json()
-            if parsed is not None:
-                data = parsed
-        
-        transcript_list = []
-        
-        if isinstance(data, list):
-            transcript_list = data
-        elif isinstance(data, dict):
-            transcript_list = data.get("transcript", data.get("result", []))
-        elif isinstance(data, str):
-            try:
-                parsed = json.loads(data)
-                if isinstance(parsed, list):
-                    transcript_list = parsed
-                elif isinstance(parsed, dict):
-                    transcript_list = parsed.get("transcript", parsed.get("result", []))
-            except json.JSONDecodeError:
-                return data[:max_chars] + "..." if len(data) > max_chars else data
-        
-        if not transcript_list or data is None:
+
+        data = response.json()
+
+        if isinstance(data, dict):
+            transcript_text = data.get("transcript", "")
+            if not transcript_text or "aren't available" in transcript_text or "not available" in transcript_text.lower():
+                return "[Transcript unavailable]"
+        else:
+            logger.warning(f"Unexpected response type: {type(data)}")
             return "[Transcript unavailable]"
-        
-        transcript_text = " ".join(str(segment.get("text", segment)) for segment in transcript_list)
 
         if len(transcript_text) > max_chars:
             transcript_text = transcript_text[:max_chars] + "..."

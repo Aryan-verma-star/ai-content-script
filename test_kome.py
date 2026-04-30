@@ -1,7 +1,7 @@
 import requests
 import json
 
-VIDEO_ID = "TJIP4K5qvmI"
+VIDEO_ID = "dQw4w9WgXcQ"  # Rick Astley - Always has transcripts
 
 def test_transcript():
     session = requests.Session()
@@ -23,18 +23,18 @@ def test_transcript():
         'referer': 'https://kome.ai/tools/youtube-transcript-generator',
     })
 
-    print(f"Testing video: https://youtu.be/{VIDEO_ID}")
+    print(f"Testing with video ID: {VIDEO_ID}")
     
     try:
         print("Step 1: Initialize session...")
-        r = session.get('https://kome.ai/tools/youtube-transcript-generator')
-        print(f"  Init status: {r.status_code}")
+        resp = session.get('https://kome.ai/tools/youtube-transcript-generator')
+        print(f"  Init status: {resp.status_code}")
         print(f"  Cookies: {dict(session.cookies)}")
 
         url = f"https://youtu.be/{VIDEO_ID}"
         payload = {'video_id': url, 'format': True, 'source': 'tool'}
         
-        print(f"Step 2: POST to API...")
+        print("Step 2: POST to API...")
         print(f"  URL: https://kome.ai/api/transcript")
         print(f"  Payload: {payload}")
         
@@ -42,30 +42,17 @@ def test_transcript():
         
         print(f"  Status: {response.status_code}")
         print(f"  Content-Type: {response.headers.get('Content-Type')}")
+        print(f"  Response (first 500): {response.text[:500]}")
         
-        raw_text = response.text
-        print(f"  Raw response (first 1000): {raw_text[:1000]}")
-        print(f"  Is valid JSON start '[': {raw_text.strip().startswith('[')}")
-        print(f"  Is valid JSON start '{{': {raw_text.strip().startswith('{')}")
-        
-        # Test parsing
         print("Step 3: Parse response...")
-        try:
-            data = response.json()
-            print(f"  response.json() succeeded: {type(data)}")
-            if isinstance(data, list):
-                print(f"  List length: {len(data)}")
-                print(f"  First item: {data[0]}")
-            elif isinstance(data, dict):
-                print(f"  Dict keys: {data.keys()}")
-        except Exception as e:
-            print(f"  response.json() failed: {e}")
-            print(f"  Trying json.loads on raw text...")
-            try:
-                data = json.loads(raw_text)
-                print(f"  json.loads succeeded: {type(data)}")
-            except Exception as e2:
-                print(f"  json.loads also failed: {e2}")
+        data = response.json()
+        print(f"  Type: {type(data)}")
+        print(f"  Keys: {data.keys() if isinstance(data, dict) else 'N/A'}")
+        
+        if isinstance(data, dict):
+            transcript = data.get('transcript', '')
+            print(f"  Transcript (first 200): {transcript[:200]}")
+            print(f"  Has transcript: {bool(transcript and 'not available' not in transcript.lower())}")
 
     except Exception as e:
         print(f"Error: {e}")
