@@ -154,10 +154,12 @@ def get_transcript(video_id: str, max_chars: int) -> str:
             logger.warning(f"Transcript API error: {response.status_code}")
             return "[Transcript unavailable]"
         
+        data = response.text
+        
         try:
-            data = response.json()
-        except json.JSONDecodeError:
-            data = response.text
+            parsed = response.json()
+            if parsed is not None:
+                data = parsed
         
         transcript_list = []
         
@@ -175,7 +177,7 @@ def get_transcript(video_id: str, max_chars: int) -> str:
             except json.JSONDecodeError:
                 return data[:max_chars] + "..." if len(data) > max_chars else data
         
-        if not transcript_list:
+        if not transcript_list or data is None:
             return "[Transcript unavailable]"
         
         transcript_text = " ".join(str(segment.get("text", segment)) for segment in transcript_list)

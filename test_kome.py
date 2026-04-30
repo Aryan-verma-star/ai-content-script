@@ -1,7 +1,9 @@
 import requests
 import json
 
-def get_transcript_mac():
+VIDEO_ID = "o9eG0QdZEh4"  # One of the videos from your log that failed
+
+def test_transcript():
     session = requests.Session()
 
     mac_safari_ua = (
@@ -21,42 +23,38 @@ def get_transcript_mac():
         'referer': 'https://kome.ai/tools/youtube-transcript-generator',
     })
 
+    print(f"Testing with video ID: {VIDEO_ID}")
+    
     try:
-        print("Initializing new MacBook session...")
+        print("Initializing session...")
         session.get('https://kome.ai/tools/youtube-transcript-generator')
-        
-        print("Cookies after init:", dict(session.cookies))
+        print(f"Cookies: {dict(session.cookies)}")
+        print(f"Session headers: {dict(session.headers)}")
 
-        api_url = 'https://kome.ai/api/transcript'
-        payload = {
-            'video_id': 'https://youtu.be/awzJu4nlHVU',
-            'format': True,
-            'source': 'tool'
-        }
+        url = f"https://youtu.be/{VIDEO_ID}"
+        payload = {'video_id': url, 'format': True, 'source': 'tool'}
+        
+        print(f" Posting to: https://kome.ai/api/transcript")
+        print(f" Payload: {payload}")
+        
+        response = session.post('https://kome.ai/api/transcript', json=payload)
+        
+        print(f"Status: {response.status_code}")
+        print(f"Response text (first 500): {response.text[:500]}")
+        print(f"Response type: {type(response.text)}")
+        
+        try:
+            data = response.json()
+            print(f"JSON parsed: {type(data)}")
+            print(f"Data: {data[:200] if len(str(data)) > 200 else data}")
+        except:
+            print("Failed to parse as JSON")
+            print(f"Raw: {response.text[:200]}")
 
-        print("Requesting transcript via MacBook identity...")
-        print(f"URL: {api_url}")
-        print(f"Payload: {payload}")
-        print(f"Headers: {dict(session.headers)}")
-        
-        response = session.post(api_url, json=payload)
-        
-        print(f"Status Code: {response.status_code}")
-        print(f"Response Headers: {dict(response.headers)}")
-        print(f"Response Text: {response.text[:1000] if len(response.text) > 1000 else response.text}")
-        
-        response.raise_for_status()
-        
-        print("Success!")
-        print("Raw response:", response.json())
-
-    except requests.exceptions.HTTPError as http_err:
-        print(f"HTTP error occurred: {http_err}")
-        print(f"Response: {response.text}")
-    except Exception as err:
-        print(f"An error occurred: {err}")
+    except Exception as e:
+        print(f"Error: {e}")
         import traceback
         traceback.print_exc()
 
 if __name__ == "__main__":
-    get_transcript_mac()
+    test_transcript()
