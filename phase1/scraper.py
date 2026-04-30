@@ -9,7 +9,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-import httpx
+import requests
 from googleapiclient.discovery import build
 
 from phase1.config import config
@@ -121,7 +121,7 @@ def get_transcript(video_id: str, max_chars: int) -> str:
     """
     try:
         url = f"https://youtu.be/{video_id}"
-        response = httpx.post(
+        response = requests.post(
             "https://kome.ai/api/transcript",
             json={
                 "video_id": url,
@@ -129,7 +129,7 @@ def get_transcript(video_id: str, max_chars: int) -> str:
                 "source": "tool",
             },
             headers={"Content-Type": "application/json"},
-            timeout=30.0,
+            timeout=30,
         )
         
         if response.status_code != 200:

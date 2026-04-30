@@ -12,6 +12,7 @@ from typing import Any
 
 import anthropic
 import httpx
+import requests
 import openai
 
 from phase1.config import config
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def _create_openai_client(
     api_key: str, base_url: str | None = None
-) -> openai.OpenAI:
+) -> "openai.OpenAI":
     """Create an OpenAI client that ignores environment proxy settings.
 
     Args:
