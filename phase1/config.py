@@ -4,12 +4,18 @@ Loads environment variables, validates required keys, and provides a central
 configuration interface for the scraping and synthesis pipeline.
 """
 
+import logging
 import os
+from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = Path(__file__).resolve().parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path, override=True)
+
+logger = logging.getLogger(__name__)
 
 REQUIRED_KEYS = [
     "YOUTUBE_API_KEY",
@@ -62,16 +68,18 @@ def validate_config() -> None:
             f"Missing required environment variables: {', '.join(missing_keys)}"
         )
 
-    provider = os.getenv("LLM_PROVIDER", "")
+    provider = os.getenv("LLM_PROVIDER", "").strip()
     if provider not in LLM_PROVIDER_VALUES:
         raise ConfigurationError(
             f"LLM_PROVIDER must be one of {LLM_PROVIDER_VALUES}, got '{provider}'"
         )
 
-    if provider == "openai_compatible" and not os.getenv("OPENAI_COMPATIBLE_API_BASE"):
-        raise ConfigurationError(
-            "OPENAI_COMPATIBLE_API_BASE is required when LLM_PROVIDER is 'openai_compatible'"
-        )
+    if provider == "openai_compatible":
+        base_url = os.getenv("OPENAI_COMPATIBLE_API_BASE", "").strip()
+        if not base_url:
+            raise ConfigurationError(
+                "OPENAI_COMPATIBLE_API_BASE is required when LLM_PROVIDER is 'openai_compatible'"
+            )
 
 
 def get_youtube_api_key() -> str:

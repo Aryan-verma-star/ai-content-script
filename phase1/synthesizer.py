@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def _create_openai_client(
     api_key: str, base_url: str | None = None
 ) -> openai.OpenAI:
-    """Create an OpenAI client.
+    """Create an OpenAI client that ignores environment proxy settings.
 
     Args:
         api_key: The API key for authentication.
@@ -31,24 +31,12 @@ def _create_openai_client(
     Returns:
         Configured OpenAI client.
     """
-    old_http_proxy = os.environ.pop("HTTP_PROXY", None)
-    old_https_proxy = os.environ.pop("HTTPS_PROXY", None)
-    old_http_proxy_lower = os.environ.pop("http_proxy", None)
-    old_https_proxy_lower = os.environ.pop("https_proxy", None)
-    
-    try:
-        client = openai.OpenAI(api_key=api_key, base_url=base_url)
-    finally:
-        if old_http_proxy:
-            os.environ["HTTP_PROXY"] = old_http_proxy
-        if old_https_proxy:
-            os.environ["HTTPS_PROXY"] = old_https_proxy
-        if old_http_proxy_lower:
-            os.environ["http_proxy"] = old_http_proxy_lower
-        if old_https_proxy_lower:
-            os.environ["https_proxy"] = old_https_proxy_lower
-    
-    return client
+    http_client = httpx.Client(trust_env=False)
+    return openai.OpenAI(
+        api_key=api_key,
+        base_url=base_url,
+        http_client=http_client,
+    )
 
 
 MAX_CONTEXT_LENGTH = 500
