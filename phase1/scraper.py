@@ -120,17 +120,35 @@ def get_transcript(video_id: str, max_chars: int) -> str:
         The transcript text, or "[Transcript unavailable]" if fetching fails.
     """
     try:
-        url = f"https://youtu.be/{video_id}"
-        response = requests.post(
-            "https://kome.ai/api/transcript",
-            json={
-                "video_id": url,
-                "format": True,
-                "source": "tool",
-            },
-            headers={"Content-Type": "application/json"},
-            timeout=30,
+        session = requests.Session()
+        
+        mac_safari_ua = (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/605.1.15 (KHTML, like Gecko) "
+            "Version/18.0 Safari/605.1.15"
         )
+        
+        session.headers.update({
+            'user-agent': mac_safari_ua,
+            'accept': 'application/json, text/plain, */*',
+            'accept-language': 'en-GB,en;q=0.9',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'origin': 'https://kome.ai',
+            'referer': 'https://kome.ai/tools/youtube-transcript-generator',
+        })
+        
+        session.get('https://kome.ai/tools/youtube-transcript-generator')
+        
+        url = f"https://youtu.be/{video_id}"
+        payload = {
+            'video_id': url,
+            'format': True,
+            'source': 'tool'
+        }
+        
+        response = session.post('https://kome.ai/api/transcript', json=payload)
         
         if response.status_code != 200:
             logger.warning(f"Transcript API error: {response.status_code}")
