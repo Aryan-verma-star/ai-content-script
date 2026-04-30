@@ -191,6 +191,7 @@ def parse_and_validate(llm_response: str) -> dict[str, Any]:
 
     Attempts to parse the LLM response as JSON and validates that
     all required keys and structures are present.
+    Handles non-structured output by extracting JSON from the response.
 
     Args:
         llm_response: The raw JSON string from the LLM.
@@ -201,8 +202,16 @@ def parse_and_validate(llm_response: str) -> dict[str, Any]:
     Raises:
         ValueError: If parsing or validation fails.
     """
+    import re
+    
+    cleaned_response = llm_response.strip()
+    
+    json_match = re.search(r'\{[\s\S]*\}', cleaned_response)
+    if json_match:
+        cleaned_response = json_match.group(0)
+    
     try:
-        parsed = json.loads(llm_response.strip())
+        parsed = json.loads(cleaned_response)
     except json.JSONDecodeError as e:
         raise ValueError(f"Failed to parse LLM JSON response: {e}")
 

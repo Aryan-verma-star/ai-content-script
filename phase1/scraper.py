@@ -9,8 +9,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
+import httpx
 from googleapiclient.discovery import build
-from youtube_transcript_api import YouTubeTranscriptApi
 
 from phase1.config import config
 
@@ -110,9 +110,7 @@ def get_youtube_trending(niche: str, max_results: int = 5) -> list[dict[str, Any
 
 
 def get_transcript(video_id: str, max_chars: int) -> str:
-    """Fetch the transcript for a YouTube video.
-
-    Uses the youtube_transcript_api to retrieve video captions.
+    """Fetch the transcript for a YouTube video using Kome AI API.
 
     Args:
         video_id: The YouTube video ID.
@@ -122,8 +120,28 @@ def get_transcript(video_id: str, max_chars: int) -> str:
         The transcript text, or "[Transcript unavailable]" if fetching fails.
     """
     try:
-        transcript_list = YouTubeTranscriptApi.get_transcript(video_id)
-        transcript_text = " ".join(segment["text"] for segment in transcript_list)
+        url = f"https://youtu.be/{video_id}"
+        response = httpx.post(
+            "https://kome.ai/api/transcript",
+            json={
+                "video_id": url,
+                "format": True,
+                "source": "tool",
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=30.0,
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        if isinstance(data, list):
+            transcript_list = data
+        elif isinstance(data, dict):
+            transcript_list = data.get("transcript", data.get("result", []))
+        else:
+            transcript_list = []
+        
+        transcript_text = " ".join(segment.get("text", str(segment)) for segment in transcript_list)
 
         if len(transcript_text) > max_chars:
             transcript_text = transcript_text[:max_chars] + "..."
