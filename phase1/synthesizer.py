@@ -6,15 +6,41 @@ parses the response, and writes a structured Trend_Brief.json file.
 
 import json
 import logging
+import os
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 import anthropic
+import httpx
 import openai
 
 from phase1.config import config
 
 logger = logging.getLogger(__name__)
+
+
+def _create_openai_client(
+    api_key: str, base_url: str | None = None
+) -> openai.OpenAI:
+    """Create an OpenAI client without proxy issues.
+
+    Args:
+        api_key: The API key for authentication.
+        base_url: Optional base URL for OpenAI-compatible APIs.
+
+    Returns:
+        Configured OpenAI client.
+    """
+    http_client = httpx.Client(
+        proxies={"http://": None, "https://": None},
+        trust_env=False,
+    )
+    return openai.OpenAI(
+        api_key=api_key,
+        base_url=base_url,
+        http_client=http_client,
+    )
 
 
 MAX_CONTEXT_LENGTH = 500
@@ -127,7 +153,7 @@ def call_llm(prompt: str) -> str:
     provider = config.llm_provider
 
     if provider == "openai":
-        client = openai.OpenAI(api_key=config.openai_api_key)
+        client = _create_openai_client(config.openai_api_key)
         response = client.chat.completions.create(
             model=config.openai_model,
             temperature=0.7,
@@ -146,9 +172,9 @@ def call_llm(prompt: str) -> str:
         return response.content[0].text
 
     elif provider == "openai_compatible":
-        client = openai.OpenAI(
-            api_key=config.openai_api_key,
-            base_url=config.openai_compatible_api_base,
+        client = _create_openai_client(
+            config.openai_api_key,
+            config.openai_compatible_api_base,
         )
         response = client.chat.completions.create(
             model=config.openai_model,
