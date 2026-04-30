@@ -170,6 +170,24 @@ def get_openaiCompatible_api_base() -> str:
     return value
 
 
+def get_openai_model() -> str:
+    """Get the OpenAI model name.
+
+    Returns:
+        The model name string.
+    """
+    return os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+
+def get_anthropic_model() -> str:
+    """Get the Anthropic model name.
+
+    Returns:
+        The model name string.
+    """
+    return os.getenv("ANTHROPIC_MODEL", "claude-3-haiku-20240307")
+
+
 class Config:
     """Central configuration object that provides access to all settings.
 
@@ -190,6 +208,8 @@ class Config:
             if self._llm_provider == "openai_compatible"
             else ""
         )
+        self._openai_model = get_openai_model()
+        self._anthropic_model = get_anthropic_model()
 
     @property
     def youtube_api_key(self) -> str:
@@ -218,6 +238,14 @@ class Config:
     @property
     def openai_compatible_api_base(self) -> str:
         return self._openai_compatible_api_base
+
+    @property
+    def openai_model(self) -> str:
+        return self._openai_model
+
+    @property
+    def anthropic_model(self) -> str:
+        return self._anthropic_model
 
 
 config = Config()

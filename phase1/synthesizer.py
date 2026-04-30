@@ -129,7 +129,7 @@ def call_llm(prompt: str) -> str:
     if provider == "openai":
         client = openai.OpenAI(api_key=config.openai_api_key)
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=config.openai_model,
             temperature=0.7,
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}],
@@ -139,7 +139,7 @@ def call_llm(prompt: str) -> str:
     elif provider == "anthropic":
         client = anthropic.Anthropic(api_key=config.anthropic_api_key)
         response = client.messages.create(
-            model="claude-3-haiku-20240307",
+            model=config.anthropic_model,
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -151,7 +151,7 @@ def call_llm(prompt: str) -> str:
             base_url=config.openai_compatible_api_base,
         )
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=config.openai_model,
             temperature=0.7,
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}],
